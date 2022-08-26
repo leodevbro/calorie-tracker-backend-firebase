@@ -11,7 +11,7 @@ import admin = require("firebase-admin");
 // import { serviceAccount } from "./tcomfybike-firebase-adminsdk-g1r6b-c21fc8dd72";
 
 interface IUserRoles {
-  manager: boolean;
+  admin: boolean;
   user: boolean;
 }
 
@@ -187,7 +187,7 @@ export const updateOneUser = functions.https.onCall(
   ) => {
     const actorId = context.auth?.uid || null;
     const idOfUserToUpdate = data.userId;
-    const forMyself = actorId === idOfUserToUpdate;
+    // const forMyself = actorId === idOfUserToUpdate;
     console.log(typeof context);
 
     const gotError = { v: false };
