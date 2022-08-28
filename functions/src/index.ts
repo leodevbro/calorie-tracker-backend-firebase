@@ -101,7 +101,7 @@ export const firebaseAdmin_getCollection_byQuery = async ({
   whereQueryArr,
 }: {
   collectionId: string;
-  whereQueryArr: [string | FieldPath, WhereFilterOp, tyFirestoreDocField][]; // .where(`members.${uid}.active`, "==", "sdfsdf")
+  whereQueryArr: [string | FieldPath, WhereFilterOp, tyFirestoreDocField][]; // [`members.${uid}.active`, "==", "sdfsdf"]
 }) => {
   const colRef = admin.firestore().collectionGroup(collectionId);
 
@@ -135,9 +135,10 @@ export const deleteOneUser = functions.https.onCall(
     try {
       // first in Auth:
       await admin.auth().deleteUser(userId);
-    } catch (err) {
-      console.log(err);
+    } catch (err: any) {
+      // console.log(err);
       gotError.v = true;
+      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
     }
 
     if (gotError.v) {
@@ -157,9 +158,10 @@ export const deleteOneUser = functions.https.onCall(
       //   });
 
       // TODO: delete the user data in ratings and rental days
-    } catch (err) {
-      console.log(err);
+    } catch (err: any) {
+      // console.log(err);
       gotError.v = true;
+      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
     }
 
     if (gotError.v) {
@@ -185,12 +187,12 @@ export const updateOneUser = functions.https.onCall(
     },
     context,
   ) => {
-    const actorId = context.auth?.uid || null;
+    const actorId: string | null = context.auth?.uid || null;
     const idOfUserToUpdate = data.userId;
     // const forMyself = actorId === idOfUserToUpdate;
     console.log(typeof context);
 
-    const gotError = { v: false };
+    const gotError: { v: any } = { v: false };
 
     try {
       // first in Auth:
@@ -200,6 +202,18 @@ export const updateOneUser = functions.https.onCall(
       //     firebase.auth().currentUser.email,
       //     providedPassword
       //   );
+      // }
+
+      // if (data.info.email) {
+      //   const thisEmailInDb = await firebaseAdmin_getCollection_byQuery({
+      //     collectionId: "users",
+      //     whereQueryArr: [[`email`, "==", data.info.email]],
+      //   });
+
+      //   if (thisEmailInDb.length > 0) {
+      //     // throw new Error("This email is not available");
+      //     return "emailNotAvailable";
+      //   }
       // }
 
       const theOb = {
@@ -213,13 +227,17 @@ export const updateOneUser = functions.https.onCall(
       if (data.info.email || data.password) {
         await admin.auth().updateUser(data.userId, theOb2);
       }
-    } catch (err) {
-      console.log(err);
-      gotError.v = true;
+    } catch (err: any) {
+      // functions.logger.log("dudube7:", Object.entries(err));
+      // console.log(err);
+      gotError.v = { from1: err };
+
+      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
+      // return;
     }
 
     if (gotError.v) {
-      return null;
+      return gotError.v;
     }
 
     try {
@@ -246,13 +264,15 @@ export const updateOneUser = functions.https.onCall(
 
         // TODO: delete the user data in ratings and rental days
       }
-    } catch (err) {
-      console.log(err);
-      gotError.v = true;
+    } catch (err: any) {
+      // console.log(err);
+      gotError.v = { from2: err };
+      // throw new Error(err.code);
+      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
     }
 
     if (gotError.v) {
-      return null;
+      return gotError.v;
     }
 
     return {
@@ -293,9 +313,10 @@ export const createOneUser = functions.https.onCall(
       const newUserRec = await admin.auth().createUser(theOb2);
 
       newUserIdObj.v = newUserRec.uid;
-    } catch (err) {
-      console.log(err);
+    } catch (err: any) {
+      // console.log(err);
       gotError.v = true;
+      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
     }
 
     if (gotError.v || !newUserIdObj.v) {
@@ -311,12 +332,13 @@ export const createOneUser = functions.https.onCall(
       const theOb2 = JSON.parse(JSON.stringify(theOb));
 
       await admin.firestore().doc(`/users/${newUserIdObj.v}`).create(theOb2);
-    } catch (err) {
-      console.log(err);
-      functions.logger.error(">>>>>>>>", err, "<<<<<<<<<", {
-        structuredData: true,
-      });
+    } catch (err: any) {
+      // console.log(err);
+      // functions.logger.error(">>>>>>>>", err, "<<<<<<<<<", {
+      //   structuredData: true,
+      // });
       gotError.v = true;
+      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
     }
 
     if (gotError.v) {
