@@ -7,8 +7,21 @@ import * as functions from "firebase-functions";
 import { FieldPath, WhereFilterOp } from "@google-cloud/firestore";
 
 import admin = require("firebase-admin");
+// import { tryGetAllKeys } from "./cool-fns";
 // eslint-disable-next-line max-len
 // import { serviceAccount } from "./tcomfybike-firebase-adminsdk-g1r6b-c21fc8dd72";
+
+interface ISweetFirebaseError {
+  errorInfo: {
+    message: string;
+    code: string;
+  };
+}
+
+interface IHttpsErrorDetails {
+  message: string;
+  code: string;
+}
 
 interface IUserRoles {
   admin: boolean;
@@ -136,9 +149,13 @@ export const deleteOneUser = functions.https.onCall(
       // first in Auth:
       await admin.auth().deleteUser(userId);
     } catch (err: any) {
+      const myError = err as ISweetFirebaseError;
       // console.log(err);
       gotError.v = true;
-      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
+      throw new functions.https.HttpsError("unknown", err.errorInfo.message, {
+        message: myError.errorInfo.message,
+        code: myError.errorInfo.code,
+      } as IHttpsErrorDetails);
     }
 
     if (gotError.v) {
@@ -159,9 +176,17 @@ export const deleteOneUser = functions.https.onCall(
 
       // TODO: delete the user data in ratings and rental days
     } catch (err: any) {
+      const myError = err as ISweetFirebaseError;
       // console.log(err);
       gotError.v = true;
-      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
+      throw new functions.https.HttpsError(
+        "unknown",
+        myError.errorInfo.message,
+        {
+          message: myError.errorInfo.message,
+          code: myError.errorInfo.code,
+        } as IHttpsErrorDetails,
+      );
     }
 
     if (gotError.v) {
@@ -228,11 +253,27 @@ export const updateOneUser = functions.https.onCall(
         await admin.auth().updateUser(data.userId, theOb2);
       }
     } catch (err: any) {
-      // functions.logger.log("dudube7:", Object.entries(err));
+      const myError = err as ISweetFirebaseError;
+
+      // functions.logger.log(
+      //   "dudube7:",
+      //   Object.entries(err),
+      //   "daaa:",
+      //   tryGetAllKeys(err),
+      // );
+
+      // functions.logger.log("dudube7:", tryGetAllKeys(err));
       // console.log(err);
       gotError.v = { from1: err };
 
-      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
+      throw new functions.https.HttpsError(
+        "unknown",
+        myError.errorInfo.message,
+        {
+          message: myError.errorInfo.message,
+          code: myError.errorInfo.code,
+        } as IHttpsErrorDetails,
+      );
       // return;
     }
 
@@ -265,10 +306,18 @@ export const updateOneUser = functions.https.onCall(
         // TODO: delete the user data in ratings and rental days
       }
     } catch (err: any) {
+      const myError = err as ISweetFirebaseError;
       // console.log(err);
       gotError.v = { from2: err };
       // throw new Error(err.code);
-      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
+      throw new functions.https.HttpsError(
+        "unknown",
+        myError.errorInfo.message,
+        {
+          message: myError.errorInfo.message,
+          code: myError.errorInfo.code,
+        } as IHttpsErrorDetails,
+      );
     }
 
     if (gotError.v) {
@@ -314,9 +363,17 @@ export const createOneUser = functions.https.onCall(
 
       newUserIdObj.v = newUserRec.uid;
     } catch (err: any) {
+      const myError = err as ISweetFirebaseError;
       // console.log(err);
       gotError.v = true;
-      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
+      throw new functions.https.HttpsError(
+        "unknown",
+        myError.errorInfo.message,
+        {
+          code: myError.errorInfo.code,
+          message: myError.errorInfo.message,
+        } as IHttpsErrorDetails,
+      );
     }
 
     if (gotError.v || !newUserIdObj.v) {
@@ -333,12 +390,20 @@ export const createOneUser = functions.https.onCall(
 
       await admin.firestore().doc(`/users/${newUserIdObj.v}`).create(theOb2);
     } catch (err: any) {
+      const myError = err as ISweetFirebaseError;
       // console.log(err);
       // functions.logger.error(">>>>>>>>", err, "<<<<<<<<<", {
       //   structuredData: true,
       // });
       gotError.v = true;
-      throw new functions.https.HttpsError("unknown", err.errorInfo.message);
+      throw new functions.https.HttpsError(
+        "unknown",
+        myError.errorInfo.message,
+        {
+          code: myError.errorInfo.code,
+          message: myError.errorInfo.message,
+        } as IHttpsErrorDetails,
+      );
     }
 
     if (gotError.v) {
